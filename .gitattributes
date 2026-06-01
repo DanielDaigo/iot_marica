@@ -1,0 +1,8 @@
+# Força o Git a normalizar todas as quebras de linha para LF (Linux)
+* text=auto eol=lf
+
+# Força arquivos Python a usarem LF
+*.py text eol=lf
+
+# Força scripts bash a usarem LF
+*.sh text eol=lf
