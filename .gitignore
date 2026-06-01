@@ -1,0 +1,11 @@
+# Ambientes virtuais e Caches
+venv/
+__pycache__/
+*.pyc
+
+# Arquivos de ambiente e senhas
+.env
+
+# Pastas de mídia e arquivos estáticos compilados
+staticfiles/
+media/
