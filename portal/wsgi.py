@@ -11,6 +11,7 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'portal.settings')
+# In production the WSGI entrypoint should use production settings by default.
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'portal.settings_production')
 
 application = get_wsgi_application()

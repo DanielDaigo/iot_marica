@@ -9,3 +9,9 @@ __pycache__/
 # Pastas de mídia e arquivos estáticos compilados
 staticfiles/
 media/
+
+# Documentação de planejamento
+Roadmap_status/
+
+# Banco de dados local
+db.sqlite3

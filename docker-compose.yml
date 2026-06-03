@@ -26,6 +26,7 @@ services:
     networks:
       - portal_network
     volumes:
+      - .:/app
       - static_files:/app/staticfiles
 
 volumes:
