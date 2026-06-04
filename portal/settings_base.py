@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     # Nossos módulos
     'portal.apps.core',
     'portal.apps.devices',
+    'portal.apps.dashboard',
 ]
 
 MIDDLEWARE = [
@@ -88,3 +89,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Grafana base URL (opcional, configurável por ambiente)
 GRAFANA_BASE_URL = env('GRAFANA_BASE_URL', default='')
+
+# --- Configurações do InfluxDB ---
+INFLUXDB_HOST = env("INFLUXDB_HOST", default="136.248.96.131")
+INFLUXDB_PORT = env.int("INFLUXDB_PORT", default=8086)
+INFLUXDB_DATABASE = env("INFLUXDB_DATABASE", default="iot_data")

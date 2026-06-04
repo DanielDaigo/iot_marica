@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="pt-BR" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Telemetria de Sensores</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script>
+      tailwind.config = { darkMode: "class" };
+    </script>
+  </head>
+  <body class="bg-gray-950 text-gray-100 min-h-screen">
+    <header
+      class="flex items-center justify-between px-6 py-3 bg-gray-900 border-b border-gray-800"
+    >
+      <div>
+        <span class="text-sm font-semibold text-white"
+          >Telemetria de Sensores</span
+        >
+        <span class="ml-3 text-xs text-gray-400 uppercase tracking-widest"
+          >Monitoramento em tempo real</span
+        >
+      </div>
+      <div class="flex items-center gap-4">
+        <form method="get" class="flex items-center gap-2">
+          <label class="text-xs text-gray-400">SENSOR</label>
+          <select
+            name="sensor"
+            onchange="this.form.submit()"
+            class="bg-gray-800 border border-gray-700 text-sm rounded px-3 py-1 text-white outline-none focus:border-blue-500"
+          >
+            {% for s in sensors %}
+            <option
+              value="{{ s.identifier }}"
+              {%
+              if
+              s.identifier=""
+              ="device_id"
+              %}selected{%
+              endif
+              %}
+            >
+              {{ s.name }}
+            </option>
+            {% endfor %}
+          </select>
+
+          <label class="text-xs text-gray-400 ml-3">PERÍODO</label>
+          <div class="flex gap-1">
+            <a
+              href="?sensor={{ device_id }}&period=24h"
+              class="px-3 py-1 rounded text-xs font-medium {% if period == '24h' %}bg-blue-600 text-white{% else %}bg-gray-800 text-gray-300 hover:bg-gray-700{% endif %}"
+              >24h</a
+            >
+            <a
+              href="?sensor={{ device_id }}&period=7d"
+              class="px-3 py-1 rounded text-xs font-medium {% if period == '7d' %}bg-blue-600 text-white{% else %}bg-gray-800 text-gray-300 hover:bg-gray-700{% endif %}"
+              >7d</a
+            >
+            <a
+              href="?sensor={{ device_id }}&period=30d"
+              class="px-3 py-1 rounded text-xs font-medium {% if period == '30d' %}bg-blue-600 text-white{% else %}bg-gray-800 text-gray-300 hover:bg-gray-700{% endif %}"
+              >30d</a
+            >
+          </div>
+        </form>
+
+        <span
+          class="flex items-center gap-1 text-xs text-green-400 ml-4 border-l border-gray-700 pl-4"
+        >
+          <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+          AO VIVO
+        </span>
+
+        <span class="text-xs text-gray-400 ml-2"
+          >{{ request.user.username }}</span
+        >
+        <a
+          href="{% url 'admin:logout' %}"
+          class="text-xs text-gray-500 hover:text-white transition-colors"
+          >sair</a
+        >
+      </div>
+    </header>
+
+    {% if record_count is not None %}
+    <div
+      class="px-6 py-2 text-xs text-gray-500 border-b border-gray-800 bg-gray-900/50"
+    >
+      {{ record_count }} registros processados • Últimas {{ period }} •
+      Auto-refresh 30s
+    </div>
+    {% endif %}
+
+    <main class="p-6 space-y-6 max-w-[1600px] mx-auto" id="main-content">
+      <section>
+        <p
+          class="text-xs text-gray-500 uppercase tracking-widest mb-3 font-semibold"
+        >
+          Visão Geral Instantânea
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div
+            class="bg-gray-900 rounded-xl p-5 border border-gray-800 relative overflow-hidden group hover:border-gray-700 transition-colors"
+          >
+            <div
+              class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"
+            >
+              <svg
+                class="w-16 h-16 text-orange-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                ></path>
+              </svg>
+            </div>
+            <p
+              class="text-xs text-orange-400 font-semibold uppercase tracking-widest mb-2 flex items-center gap-2"
+            >
+              <span class="w-2 h-2 rounded-full bg-orange-400"></span>
+              Temperatura
+            </p>
+            <div class="flex items-baseline gap-2">
+              <p class="text-5xl font-bold text-white tracking-tight">
+                {{ last_temp|default:"—" }}
+              </p>
+              {% if last_temp %}<span class="text-2xl text-gray-400 font-medium"
+                >°C</span
+              >{% endif %}
+            </div>
+          </div>
+
+          <div
+            class="bg-gray-900 rounded-xl p-5 border border-gray-800 relative overflow-hidden group hover:border-gray-700 transition-colors"
+          >
+            <div
+              class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"
+            >
+              <svg
+                class="w-16 h-16 text-green-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
+                ></path>
+              </svg>
+            </div>
+            <p
+              class="text-xs text-green-400 font-semibold uppercase tracking-widest mb-2 flex items-center gap-2"
+            >
+              <span class="w-2 h-2 rounded-full bg-green-400"></span> Umidade
+              Relativa
+            </p>
+            <div class="flex items-baseline gap-2">
+              <p class="text-5xl font-bold text-white tracking-tight">
+                {{ last_humidity|default:"—" }}
+              </p>
+              {% if last_humidity is not None %}<span
+                class="text-2xl text-gray-400 font-medium"
+                >%</span
+              >{% endif %}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <p
+          class="text-xs text-gray-500 uppercase tracking-widest mb-3 font-semibold"
+        >
+          Séries Temporais InfluxDB
+        </p>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-gray-900 rounded-xl p-5 border border-gray-800">
+            <div class="flex justify-between items-center mb-6">
+              <span
+                class="text-sm font-medium text-orange-400 flex items-center gap-2"
+                ><span class="w-2 h-2 rounded-full bg-orange-400"></span>
+                Evolução Térmica</span
+              >
+              <span
+                class="text-sm font-bold text-white bg-gray-800 px-3 py-1 rounded-full border border-gray-700"
+                >{{ last_temp|default:"—" }}
+                <span class="text-gray-400 font-normal text-xs">°C</span></span
+              >
+            </div>
+            <div class="relative h-[200px] w-full">
+              <canvas id="tempChart"></canvas>
+            </div>
+          </div>
+
+          <div class="bg-gray-900 rounded-xl p-5 border border-gray-800">
+            <div class="flex justify-between items-center mb-6">
+              <span
+                class="text-sm font-medium text-green-400 flex items-center gap-2"
+                ><span class="w-2 h-2 rounded-full bg-green-400"></span>
+                Evolução de Umidade</span
+              >
+              <span
+                class="text-sm font-bold text-white bg-gray-800 px-3 py-1 rounded-full border border-gray-700"
+                >{{ last_humidity|default:"—" }}
+                <span class="text-gray-400 font-normal text-xs">%</span></span
+              >
+            </div>
+            <div class="relative h-[200px] w-full">
+              <canvas id="humidChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const labels = {{ labels|safe }};
+      const temps  = {{ temperatures|safe }};
+      const humid  = {{ humidities|safe }};
+
+      // Formatação de data/hora para o eixo X
+      const formattedLabels = labels.map(label => {
+        const d = new Date(label);
+        return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      });
+
+      const chartDefaults = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            backgroundColor: 'rgba(17, 24, 39, 0.9)',
+            titleColor: '#9ca3af',
+            bodyColor: '#f3f4f6',
+            borderColor: '#374151',
+            borderWidth: 1,
+            padding: 10,
+            displayColors: false
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false, drawBorder: false },
+            ticks: { color: '#6b7280', maxTicksLimit: 8, font: { size: 10 } }
+          },
+          y: {
+            grid: { color: '#1f2937', drawBorder: false, borderDash: [5, 5] },
+            ticks: { color: '#6b7280', font: { size: 11 }, padding: 10 }
+          }
+        },
+        elements: {
+          point: { radius: 0, hitRadius: 10, hoverRadius: 4 },
+          line: { tension: 0.4 }
+        },
+        interaction: { mode: 'nearest', axis: 'x', intersect: false }
+      };
+
+      // Instanciar Gráfico de Temperatura
+      const ctxTemp = document.getElementById('tempChart').getContext('2d');
+      const gradTemp = ctxTemp.createLinearGradient(0, 0, 0, 200);
+      gradTemp.addColorStop(0, 'rgba(249, 115, 22, 0.2)');
+      gradTemp.addColorStop(1, 'rgba(249, 115, 22, 0)');
+
+      new Chart(ctxTemp, {
+        type: 'line',
+        data: {
+          labels: formattedLabels,
+          datasets: [{
+            data: temps,
+            borderColor: '#f97316',
+            backgroundColor: gradTemp,
+            fill: true,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          ...chartDefaults,
+          scales: {
+            ...chartDefaults.scales,
+            y: {
+              ...chartDefaults.scales.y,
+              min: temps.length ? Math.floor(Math.min(...temps.filter(Boolean)) - 2) : 0
+            }
+          }
+        }
+      });
+
+      // Instanciar Gráfico de Umidade
+      const ctxHumid = document.getElementById('humidChart').getContext('2d');
+      const gradHumid = ctxHumid.createLinearGradient(0, 0, 0, 200);
+      gradHumid.addColorStop(0, 'rgba(74, 222, 128, 0.2)');
+      gradHumid.addColorStop(1, 'rgba(74, 222, 128, 0)');
+
+      new Chart(ctxHumid, {
+        type: 'line',
+        data: {
+          labels: formattedLabels,
+          datasets: [{
+            data: humid,
+            borderColor: '#4ade80',
+            backgroundColor: gradHumid,
+            fill: true,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          ...chartDefaults,
+          scales: {
+            ...chartDefaults.scales,
+            y: {
+              ...chartDefaults.scales.y,
+              min: humid.length ? Math.floor(Math.min(...humid.filter(Boolean)) - 5) : 0
+            }
+          }
+        }
+      });
+
+      // Auto-refresh da página a cada 30 segundos
+      setTimeout(() => location.reload(), 30000);
+    </script>
+  </body>
+</html>
