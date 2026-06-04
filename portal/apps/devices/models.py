@@ -97,13 +97,29 @@ class Sensor(models.Model):
         - If `base_url` is not provided, attempts to read `GRAFANA_BASE_URL` from settings.
         """
         from urllib.parse import urlencode
+        from django.conf import settings
 
         base = base_url or getattr(settings, 'GRAFANA_BASE_URL', '')
         if not base:
             return ''
 
         params = panel_params.copy() if panel_params else {}
-        # Include sensor identifier so Grafana dashboard can filter to this sensor
-        params.setdefault('var-sensor', self.identifier)
+        
+        # Parâmetros obrigatórios para manter o tempo real e o fuso horário corretos
+        params.setdefault('orgId', '1')
+        params.setdefault('from', 'now-3h')
+        params.setdefault('to', 'now')
+        params.setdefault('timezone', 'browser')
+        params.setdefault('refresh', '5s')
+        
+        # Garante que o Grafana filtre apenas os dados DESTE sensor clicado
+        params.setdefault('var-dispositivo', self.identifier)
+        
+        # Transforma o dicionário em uma query string limpa (ex: orgId=1&var-dispositivo=marica_x)
         q = urlencode(params)
-        return f"{base.rstrip('/')}/?{q}"
+        
+        # Caminho exato do seu dashboard
+        dashboard_path = "d/adft9bt/marica-iot"
+        
+        # Monta a URL final e anexa o &kiosk para esconder a interface do Grafana no iframe
+        return f"{base.rstrip('/')}/{dashboard_path}?{q}&kiosk"
