@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from influxdb import InfluxDBClient
+import json
 
 from portal.apps.devices.models import Sensor
 
@@ -82,9 +83,9 @@ def dashboard(request):
         "selected_sensor": selected_sensor,
         "device_id": device_id,
         "period": period,
-        "labels": labels,
-        "temperatures": temperatures,
-        "humidities": humidities,
+        "labels": json.dumps(labels),
+        "temperatures": json.dumps(temperatures),
+        "humidities": json.dumps(humidities),
         "last_temp": last_temp,
         "last_humidity": last_humidity,
         "record_count": record_count,
