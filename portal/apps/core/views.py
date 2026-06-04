@@ -2,6 +2,36 @@ from django.http import JsonResponse, HttpResponse
 from django.db import connections
 from django.db.utils import OperationalError
 from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_POST
+from django.contrib.admin.views.decorators import staff_member_required
+
+
+@staff_member_required
+@require_POST
+def rotate_sensor_key(request, pk: int):
+	from portal.apps.devices.models import Sensor
+
+	try:
+		sensor = Sensor.objects.get(pk=pk)
+	except Sensor.DoesNotExist:
+		return JsonResponse({'error': 'not found'}, status=404)
+
+	sensor.rotate_api_key(performed_by=request.user)
+	return JsonResponse({'result': 'rotated', 'new_key': sensor.api_key})
+
+
+@staff_member_required
+@require_POST
+def revoke_sensor_key(request, pk: int):
+	from portal.apps.devices.models import Sensor
+
+	try:
+		sensor = Sensor.objects.get(pk=pk)
+	except Sensor.DoesNotExist:
+		return JsonResponse({'error': 'not found'}, status=404)
+
+	sensor.revoke_api_key(performed_by=request.user)
+	return JsonResponse({'result': 'revoked', 'is_active': sensor.is_active})
 
 
 def health(request):

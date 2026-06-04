@@ -23,6 +23,28 @@ class SensorType(models.Model):
         return self.name
 
 
+class SensorApiKeyAudit(models.Model):
+    ACTION_CHOICES = [
+        ('rotate', 'Rotate'),
+        ('revoke', 'Revoke'),
+        ('set', 'Set'),
+    ]
+
+    sensor = models.ForeignKey('Sensor', on_delete=models.CASCADE, related_name='api_key_audits')
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    old_key = models.CharField(max_length=128, blank=True, null=True)
+    new_key = models.CharField(max_length=128, blank=True, null=True)
+    performed_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Sensor API Key Audit'
+        verbose_name_plural = 'Sensor API Key Audits'
+
+    def __str__(self):
+        return f"{self.sensor.identifier} - {self.action} @ {self.created_at.strftime('%Y-%m-%d %H:%M:%S')}"
+
+
 class Sensor(models.Model):
     """Represents an inventory entry for a physical sensor attached to a node/device."""
     identifier = models.CharField(max_length=100, unique=True, help_text="Identificador único do sensor (ex: mac, serial, node+index)")
@@ -42,9 +64,27 @@ class Sensor(models.Model):
     def __str__(self):
         return f"{self.name} ({self.identifier})"
 
-    def rotate_api_key(self):
+    def rotate_api_key(self, performed_by=None):
+        """Rotate the API key and record an audit entry."""
+        old = self.api_key
         self.api_key = _generate_api_key()
         self.save(update_fields=['api_key'])
+        try:
+            SensorApiKeyAudit.objects.create(sensor=self, action='rotate', old_key=old, new_key=self.api_key, performed_by=getattr(performed_by, 'pk', None) and performed_by)
+        except Exception:
+            # Do not fail on audit errors
+            pass
+
+    def revoke_api_key(self, performed_by=None):
+        """Revoke the API key by rotating and disabling the sensor."""
+        old = self.api_key
+        self.api_key = _generate_api_key()
+        self.is_active = False
+        self.save(update_fields=['api_key', 'is_active'])
+        try:
+            SensorApiKeyAudit.objects.create(sensor=self, action='revoke', old_key=old, new_key=self.api_key, performed_by=getattr(performed_by, 'pk', None) and performed_by)
+        except Exception:
+            pass
 
     def mark_seen(self):
         self.last_seen = timezone.now()

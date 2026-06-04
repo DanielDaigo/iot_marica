@@ -12,7 +12,13 @@ class SensorTypeAdmin(admin.ModelAdmin):
 @admin.action(description='Rotate API key for selected sensors')
 def rotate_api_key(modeladmin, request, queryset):
 	for obj in queryset:
-		obj.rotate_api_key()
+		obj.rotate_api_key(performed_by=request.user)
+
+
+@admin.action(description='Revoke API key for selected sensors')
+def revoke_api_key(modeladmin, request, queryset):
+	for obj in queryset:
+		obj.revoke_api_key(performed_by=request.user)
 
 
 @admin.register(Sensor)
@@ -22,6 +28,7 @@ class SensorAdmin(admin.ModelAdmin):
 	search_fields = ('identifier', 'name')
 	list_filter = ('sensor_type', 'is_active')
 	actions = (rotate_api_key,)
+	actions = (rotate_api_key, revoke_api_key)
 
 	def grafana_link(self, obj):
 		url = obj.grafana_link()
