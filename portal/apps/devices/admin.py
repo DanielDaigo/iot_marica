@@ -1,46 +1,43 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from unfold.admin import ModelAdmin  # IMPORT NOVO
+
 from .models import SensorType, Sensor, SensorApiKeyAudit
 
+# TROCAMOS admin.ModelAdmin por ModelAdmin do Unfold
 
 @admin.register(SensorApiKeyAudit)
-class SensorApiKeyAuditAdmin(admin.ModelAdmin):
+class SensorApiKeyAuditAdmin(ModelAdmin): 
     list_display = ('sensor', 'action', 'performed_by', 'created_at')
     readonly_fields = ('sensor', 'action', 'old_key', 'new_key', 'performed_by', 'created_at')
     list_filter = ('action', 'created_at')
     search_fields = ('sensor__name', 'sensor__identifier')
 
-    # --- TRAVAS DE IMUTABILIDADE DE AUDITORIA ---
+    # Travas de Imutabilidade
     def has_add_permission(self, request):
         return False
-
     def has_change_permission(self, request, obj=None):
         return False
-
     def has_delete_permission(self, request, obj=None):
         return False
 
-
 @admin.register(SensorType)
-class SensorTypeAdmin(admin.ModelAdmin):
+class SensorTypeAdmin(ModelAdmin):
     list_display = ('name', 'unit')
     search_fields = ('name',)
-
 
 @admin.action(description='Rotate API key for selected sensors')
 def rotate_api_key(modeladmin, request, queryset):
     for obj in queryset:
         obj.rotate_api_key(performed_by=request.user)
 
-
 @admin.action(description='Revoke API key for selected sensors')
 def revoke_api_key(modeladmin, request, queryset):
     for obj in queryset:
         obj.revoke_api_key(performed_by=request.user)
 
-
 @admin.register(Sensor)
-class SensorAdmin(admin.ModelAdmin):
+class SensorAdmin(ModelAdmin):
     list_display = ('identifier', 'name', 'sensor_type', 'is_active', 'last_seen', 'grafana_link')
     readonly_fields = ('api_key', 'created_at', 'last_seen')
     search_fields = ('identifier', 'name')
