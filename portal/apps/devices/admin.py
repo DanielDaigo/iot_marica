@@ -10,6 +10,16 @@ class SensorApiKeyAuditAdmin(admin.ModelAdmin):
     list_filter = ('action', 'created_at')
     search_fields = ('sensor__name', 'sensor__identifier')
 
+    # --- TRAVAS DE IMUTABILIDADE DE AUDITORIA ---
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(SensorType)
 class SensorTypeAdmin(admin.ModelAdmin):
@@ -32,42 +42,15 @@ def revoke_api_key(modeladmin, request, queryset):
 @admin.register(Sensor)
 class SensorAdmin(admin.ModelAdmin):
     list_display = ('identifier', 'name', 'sensor_type', 'is_active', 'last_seen', 'grafana_link')
-    
-    # Injetamos o grafico_embutido como campo de leitura
-    readonly_fields = ('api_key', 'created_at', 'last_seen', 'grafico_embutido')
+    readonly_fields = ('api_key', 'created_at', 'last_seen')
     search_fields = ('identifier', 'name')
     list_filter = ('sensor_type', 'is_active')
     actions = (rotate_api_key, revoke_api_key)
-
-    # Organização visual da página do sensor no Jazzmin
-    fieldsets = (
-        ("Identificação e Status", {
-            "fields": ("identifier", "name", "sensor_type", "is_active", "last_seen", "created_at")
-        }),
-        ("Autenticação", {
-            "fields": ("api_key",),
-            "description": "Selecione o sensor na lista e use a caixa de ações para rotacionar ou revogar a chave."
-        }),
-        ("Painel de Telemetria (VM 1)", {
-            "fields": ("grafico_embutido",),
-            "description": "Gráfico gerado dinamicamente pelo Grafana em modo Kiosk."
-        }),
-    )
 
     def grafana_link(self, obj):
         url = obj.grafana_link()
         if not url:
             return '-'
         return format_html('<a href="{}" target="_blank">Abrir Externo</a>', url)
+    
     grafana_link.short_description = 'Grafana'
-
-    # Função que renderiza o Iframe na tela de detalhes
-    @admin.display(description="Gráfico em Tempo Real")
-    def grafico_embutido(self, obj):
-        url = obj.grafana_link()
-        if not url:
-            return "Dashboard não configurado."
-        return format_html(
-            '<iframe src="{}" width="100%" height="500" frameborder="0" style="border:1px solid #ddd; border-radius:8px;"></iframe>',
-            url
-        )
