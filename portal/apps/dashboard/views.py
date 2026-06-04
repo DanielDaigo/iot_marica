@@ -9,6 +9,8 @@ def get_influx_client():
     return InfluxDBClient(
         host=settings.INFLUXDB_HOST,
         port=settings.INFLUXDB_PORT,
+        username=settings.INFLUXDB_USER,
+        password=settings.INFLUXDB_PASSWORD,
         database=settings.INFLUXDB_DATABASE,
     )
 
