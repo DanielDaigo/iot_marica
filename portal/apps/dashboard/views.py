@@ -19,9 +19,8 @@ def get_influx_client():
 def dashboard(request):
     sensors = Sensor.objects.filter(is_active=True).order_by("name")
     device_id = request.GET.get("sensor", sensors.first().identifier if sensors.exists() else None)
-    period = request.GET.get("period", "15m") # Default mais granular para testes rápidos
+    period = request.GET.get("period", "15m")
 
-    # Mapeamento granular: (Tempo de busca, Agrupamento de resolução)
     period_map = {
         "15m": ("15m", "5s"),
         "1h": ("1h", "1m"),
@@ -34,11 +33,12 @@ def dashboard(request):
 
     labels, temperatures, humidities = [], [], []
     last_temp = last_humidity = record_count = None
+    temp_min = temp_max = hum_min = hum_max = None
+    temp_trend = hum_trend = "estável"
 
     if device_id:
         client = get_influx_client()
 
-        # fill(null) evita desenhar gráficos com dados de testes passados
         query = (
             f"SELECT mean(valor) AS temperatura, mean(umidade) AS umidade "
             f"FROM telemetria_ambiental "
@@ -55,7 +55,7 @@ def dashboard(request):
                     temperatures.append(round(p["temperatura"], 1) if p.get("temperatura") is not None else None)
                     humidities.append(round(p["umidade"], 1) if p.get("umidade") is not None else None)
 
-            # Limitamos a última leitura ao período selecionado para matar fantasmas antigos
+            # Última leitura
             last_query = (
                 f"SELECT last(valor) AS temperatura, last(umidade) AS umidade "
                 f"FROM telemetria_ambiental "
@@ -66,6 +66,7 @@ def dashboard(request):
                 last_temp = round(last_result[0].get("temperatura", 0), 1) if last_result[0].get("temperatura") is not None else None
                 last_humidity = round(last_result[0].get("umidade", 0), 1) if last_result[0].get("umidade") is not None else None
 
+            # Contagem
             count_query = (
                 f"SELECT count(valor) FROM telemetria_ambiental "
                 f"WHERE dispositivo = '{device_id}' AND time > now() - {influx_period}"
@@ -73,6 +74,31 @@ def dashboard(request):
             count_result = list(client.query(count_query).get_points())
             if count_result:
                 record_count = count_result[0].get("count", 0)
+
+            # NOVO: Mínimos e Máximos do período
+            minmax_query = (
+                f"SELECT min(valor) AS temp_min, max(valor) AS temp_max, "
+                f"min(umidade) AS hum_min, max(umidade) AS hum_max "
+                f"FROM telemetria_ambiental "
+                f"WHERE dispositivo = '{device_id}' AND time > now() - {influx_period}"
+            )
+            minmax_result = list(client.query(minmax_query).get_points())
+            if minmax_result:
+                temp_min = round(minmax_result[0].get("temp_min", 0), 1) if minmax_result[0].get("temp_min") is not None else None
+                temp_max = round(minmax_result[0].get("temp_max", 0), 1) if minmax_result[0].get("temp_max") is not None else None
+                hum_min  = round(minmax_result[0].get("hum_min", 0), 1) if minmax_result[0].get("hum_min") is not None else None
+                hum_max  = round(minmax_result[0].get("hum_max", 0), 1) if minmax_result[0].get("hum_max") is not None else None
+
+            # NOVO: Cálculo de Tendência (Compara a primeira e a última leitura da tela atual)
+            valid_temps = [t for t in temperatures if t is not None]
+            valid_humids = [h for h in humidities if h is not None]
+            if len(valid_temps) >= 2:
+                diff = valid_temps[-1] - valid_temps[0]
+                temp_trend = "subindo" if diff > 0.3 else "caindo" if diff < -0.3 else "estável"
+            if len(valid_humids) >= 2:
+                diff = valid_humids[-1] - valid_humids[0]
+                hum_trend = "subindo" if diff > 1 else "caindo" if diff < -1 else "estável"
+
         except Exception as e:
             print(f"Erro no InfluxDB: {e}")
 
@@ -89,4 +115,12 @@ def dashboard(request):
         "last_temp": last_temp,
         "last_humidity": last_humidity,
         "record_count": record_count,
+        "temp_min": temp_min,
+        "temp_max": temp_max,
+        "hum_min": hum_min,
+        "hum_max": hum_max,
+        "temp_trend": temp_trend,
+        "hum_trend": hum_trend,
+        "has_temp_data": any(t is not None for t in temperatures),
+        "has_hum_data": any(h is not None for h in humidities),
     })
