@@ -162,8 +162,9 @@
       const temps  = {{ temperatures|safe }};
       const humid  = {{ humidities|safe }};
       
-      const lastTempRaw = {{ last_temp|default:"null" }};
-      const lastHumidRaw = {{ last_humidity|default:"null" }};
+      // Lendo do JSON para garantir que o JavaScript receba valores com ponto ao invés de vírgula (ex: 22.9)
+      const lastTempRaw = {{ last_temp_json|safe }};
+      const lastHumidRaw = {{ last_humidity_json|safe }};
 
       // --- CONFIGURAÇÃO DOS GAUGES ---
       const TEMP_SCALE = { min: 0, max: 50 };

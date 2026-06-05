@@ -21,6 +21,7 @@ def dashboard(request):
     device_id = request.GET.get("sensor", sensors.first().identifier if sensors.exists() else None)
     period = request.GET.get("period", "15m")
 
+    # Mapeamento de tempo e agrupamento
     period_map = {
         "15m": ("15m", "5s"),
         "1h": ("1h", "1m"),
@@ -39,6 +40,7 @@ def dashboard(request):
     if device_id:
         client = get_influx_client()
 
+        # Query principal
         query = (
             f"SELECT mean(valor) AS temperatura, mean(umidade) AS umidade "
             f"FROM telemetria_ambiental "
@@ -66,7 +68,7 @@ def dashboard(request):
                 last_temp = round(last_result[0].get("temperatura", 0), 1) if last_result[0].get("temperatura") is not None else None
                 last_humidity = round(last_result[0].get("umidade", 0), 1) if last_result[0].get("umidade") is not None else None
 
-            # Contagem
+            # Contagem de registros
             count_query = (
                 f"SELECT count(valor) FROM telemetria_ambiental "
                 f"WHERE dispositivo = '{device_id}' AND time > now() - {influx_period}"
@@ -75,7 +77,7 @@ def dashboard(request):
             if count_result:
                 record_count = count_result[0].get("count", 0)
 
-            # NOVO: Mínimos e Máximos do período
+            # Mínimos e Máximos
             minmax_query = (
                 f"SELECT min(valor) AS temp_min, max(valor) AS temp_max, "
                 f"min(umidade) AS hum_min, max(umidade) AS hum_max "
@@ -89,7 +91,7 @@ def dashboard(request):
                 hum_min  = round(minmax_result[0].get("hum_min", 0), 1) if minmax_result[0].get("hum_min") is not None else None
                 hum_max  = round(minmax_result[0].get("hum_max", 0), 1) if minmax_result[0].get("hum_max") is not None else None
 
-            # NOVO: Cálculo de Tendência (Compara a primeira e a última leitura da tela atual)
+            # Cálculo de Tendência
             valid_temps = [t for t in temperatures if t is not None]
             valid_humids = [h for h in humidities if h is not None]
             if len(valid_temps) >= 2:
@@ -112,8 +114,12 @@ def dashboard(request):
         "labels": json.dumps(labels),
         "temperatures": json.dumps(temperatures),
         "humidities": json.dumps(humidities),
+        # Valores formatados pelo Django para exibir no HTML (podem ter vírgula no pt-BR)
         "last_temp": last_temp,
         "last_humidity": last_humidity,
+        # Valores blindados em JSON para usar dentro da tag <script> do JavaScript
+        "last_temp_json": json.dumps(last_temp),
+        "last_humidity_json": json.dumps(last_humidity),
         "record_count": record_count,
         "temp_min": temp_min,
         "temp_max": temp_max,
