@@ -198,7 +198,7 @@
         options: {
           circumference: 180,
           rotation: -90,
-          cutout: '82%', // Afinou o anel
+          cutout: '86%', // Anel ainda mais fino e elegante
           responsive: true,
           maintainAspectRatio: false,
           plugins: { legend: { display: false }, tooltip: { enabled: false } },
@@ -207,32 +207,48 @@
       };
 
       if (document.getElementById('gaugeTemp')) {
-        gaugeTempInstance = new Chart(document.getElementById('gaugeTemp').getContext('2d'), {
+        const ctxTemp = document.getElementById('gaugeTemp').getContext('2d');
+        const gradTemp = ctxTemp.createLinearGradient(0, 0, 300, 0);
+        gradTemp.addColorStop(0, '#fcd34d'); // amarelo
+        gradTemp.addColorStop(0.5, '#f97316'); // laranja
+        gradTemp.addColorStop(1, '#ef4444'); // vermelho
+
+        gaugeTempInstance = new Chart(ctxTemp, {
           ...gaugeOptions,
           data: {
             datasets: [{
               data: buildGaugeData(lastTempRaw, TEMP_SCALE),
-              backgroundColor: ['#f97316', '#1f2937'],
+              backgroundColor: [gradTemp, 'rgba(31, 41, 55, 0.5)'],
               borderWidth: 0,
-              borderRadius: [8, 0], // Canto arredondado na ponta
+              borderRadius: [10, 0], // Canto mais arredondado
+              hoverOffset: 2
             }]
           }
         });
       }
 
       if (document.getElementById('gaugeHumid')) {
-        gaugeHumidInstance = new Chart(document.getElementById('gaugeHumid').getContext('2d'), {
+        const ctxHumid = document.getElementById('gaugeHumid').getContext('2d');
+        const gradHumid = ctxHumid.createLinearGradient(0, 0, 300, 0);
+        gradHumid.addColorStop(0, '#6ee7b7'); // verde claro
+        gradHumid.addColorStop(0.5, '#10b981'); // verde
+        gradHumid.addColorStop(1, '#3b82f6'); // azul
+
+        gaugeHumidInstance = new Chart(ctxHumid, {
           ...gaugeOptions,
           data: {
             datasets: [{
               data: buildGaugeData(lastHumidRaw, HUM_SCALE),
-              backgroundColor: ['#4ade80', '#1f2937'],
+              backgroundColor: [gradHumid, 'rgba(31, 41, 55, 0.5)'],
               borderWidth: 0,
-              borderRadius: [8, 0],
+              borderRadius: [10, 0],
+              hoverOffset: 2
             }]
           }
         });
       }
+
+
 
       // --- CONFIGURAÇÃO DOS GRÁFICOS DE LINHA ---
       Chart.defaults.font.family = "'Inter', sans-serif";
