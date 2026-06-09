@@ -97,10 +97,56 @@ INFLUXDB_DATABASE = env("INFLUXDB_DATABASE", default="iot_data")
 INFLUXDB_USER = env("INFLUXDB_USER", default="")
 INFLUXDB_PASSWORD = env("INFLUXDB_PASSWORD", default="")
 
+def environment_callback(request):
+    """Badge de ambiente exibido no topo do painel."""
+    import os
+    if env.bool('DJANGO_DEBUG', False):
+        return ["Desenvolvimento", "info"]
+    return ["Produção", "danger"]
+
 # Configuração do Tema Unfold (Admin)
 UNFOLD = {
     "SITE_TITLE": "Telemetria de Sensores",
     "SITE_HEADER": "Telemetria Admin",
+    "ENVIRONMENT": "portal.settings_base.environment_callback",
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": True,
+        "navigation": [
+            {
+                "title": "Gestão de Dispositivos",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Sensores",
+                        "icon": "sensors",
+                        "link": reverse_lazy("admin:devices_sensor_changelist"),
+                    },
+                    {
+                        "title": "Tipos de Sensor",
+                        "icon": "category",
+                        "link": reverse_lazy("admin:devices_sensortype_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": "Segurança & Acessos",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Auditoria de Chaves",
+                        "icon": "key",
+                        "link": reverse_lazy("admin:devices_sensorapikeyaudit_changelist"),
+                    },
+                    {
+                        "title": "Usuários",
+                        "icon": "group",
+                        "link": reverse_lazy("admin:auth_user_changelist"),
+                    },
+                ],
+            },
+        ],
+    },
     "USER_MENU": [
         {
             "icon": "query_stats",  # Ícone do Material Symbols
