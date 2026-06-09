@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 import environ
-
+from django.urls import reverse_lazy
 # Constrói os caminhos base do projeto
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -47,7 +47,7 @@ ROOT_URLCONF = 'portal.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -96,3 +96,16 @@ INFLUXDB_PORT = env.int("INFLUXDB_PORT", default=8086)
 INFLUXDB_DATABASE = env("INFLUXDB_DATABASE", default="iot_data")
 INFLUXDB_USER = env("INFLUXDB_USER", default="")
 INFLUXDB_PASSWORD = env("INFLUXDB_PASSWORD", default="")
+
+# Configuração do Tema Unfold (Admin)
+UNFOLD = {
+    "SITE_TITLE": "Telemetria de Sensores",
+    "SITE_HEADER": "Telemetria Admin",
+    "USER_MENU": [
+        {
+            "icon": "query_stats",  # Ícone do Material Symbols
+            "title": "Acessar Dashboard",
+            "link": reverse_lazy("dashboard:index"),
+        },
+    ],
+}
