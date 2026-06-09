@@ -1,5 +1,4 @@
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from influxdb import InfluxDBClient
 import json
@@ -15,7 +14,6 @@ def get_influx_client():
         database=settings.INFLUXDB_DATABASE,
     )
 
-@login_required
 def dashboard(request):
     sensors = Sensor.objects.filter(is_active=True).order_by("name")
     device_id = request.GET.get("sensor", sensors.first().identifier if sensors.exists() else None)
