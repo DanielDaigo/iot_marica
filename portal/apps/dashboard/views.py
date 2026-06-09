@@ -104,7 +104,7 @@ def dashboard(request):
 
     selected_sensor = sensors.filter(identifier=device_id).first()
 
-    return render(request, "dashboard/index.html", {
+    context = {
         "sensors": sensors,
         "selected_sensor": selected_sensor,
         "device_id": device_id,
@@ -112,10 +112,8 @@ def dashboard(request):
         "labels": json.dumps(labels),
         "temperatures": json.dumps(temperatures),
         "humidities": json.dumps(humidities),
-        # Valores formatados pelo Django para exibir no HTML (podem ter vírgula no pt-BR)
         "last_temp": last_temp,
         "last_humidity": last_humidity,
-        # Valores blindados em JSON para usar dentro da tag <script> do JavaScript
         "last_temp_json": json.dumps(last_temp),
         "last_humidity_json": json.dumps(last_humidity),
         "record_count": record_count,
@@ -127,4 +125,25 @@ def dashboard(request):
         "hum_trend": hum_trend,
         "has_temp_data": any(t is not None for t in temperatures),
         "has_hum_data": any(h is not None for h in humidities),
-    })
+    }
+
+    if request.GET.get('fetch') == 'true':
+        from django.http import JsonResponse
+        return JsonResponse({
+            "labels": labels,
+            "temperatures": temperatures,
+            "humidities": humidities,
+            "last_temp": last_temp,
+            "last_humidity": last_humidity,
+            "record_count": record_count,
+            "temp_min": temp_min,
+            "temp_max": temp_max,
+            "hum_min": hum_min,
+            "hum_max": hum_max,
+            "temp_trend": temp_trend,
+            "hum_trend": hum_trend,
+            "has_temp_data": any(t is not None for t in temperatures),
+            "has_hum_data": any(h is not None for h in humidities),
+        })
+
+    return render(request, "dashboard/index.html", context)
