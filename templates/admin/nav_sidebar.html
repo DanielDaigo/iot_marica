@@ -1,13 +1,6 @@
 {% load i18n %}
 
 <div class="relative z-50">
-    <!-- Botão flutuante movido para o canto inferior direito com visual de FAB -->
-    <div @click="sidebarMobileOpen = !sidebarMobileOpen"
-         class="fixed bottom-6 right-6 bg-gray-800 cursor-pointer flex items-center justify-center px-4 py-3 rounded-full shadow-xl text-sm font-semibold text-white uppercase z-[60] xl:hidden transition-transform transform hover:scale-105 active:scale-95 dark:bg-gray-700">
-        <span class="material-symbols-outlined mr-2" style="font-size: 20px;" x-text="sidebarMobileOpen ? 'close' : 'menu'">menu</span>
-        <span x-text="sidebarMobileOpen ? 'Fechar' : '{% trans 'Menu' %}'">{% trans "Menu" %}</span>
-    </div>
-
     <div :class="{'xl:block': sidebarDesktopOpen, 'xl:hidden': !sidebarDesktopOpen, 'max-xl:fixed': sidebarMobileOpen, 'hidden': !sidebarMobileOpen }">
         {% include "unfold/helpers/navigation.html" %}
     </div>

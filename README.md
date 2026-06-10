@@ -22,7 +22,7 @@ Uma plataforma robusta para monitoramento de sensores IoT em tempo real, constru
 - **Séries Temporais:** Análise do histórico térmico baseado em queries avançadas no InfluxDB agrupadas por tempo (`GROUP BY time()`).
 
 ### 2. Painel de Administração (Admin Panel)
-- **Experiência de Uso Aprimorada (UX):** Painel alimentado pela biblioteca `django-unfold`.
+- **Experiência de Uso Aprimorada (UX):** Painel alimentado pela biblioteca `django-unfold`, com customizações exclusivas de usabilidade mobile (como o menu Hamburger fixado no cabeçalho ao invés de botões flutuantes).
 - **Botões Dinâmicos de Ação:** O painel conta com atalhos injetados diretamente na tela de detalhes do Sensor, permitindo **"↻ Girar Chave"** ou **"⚠ Revogar Chave"** de API com apenas um clique.
 - **Indicadores Visuais (Badges):** Um selo permanente no topo avisa se a aplicação está rodando em ambiente de **Desenvolvimento** ou **Produção**, prevenindo desastres operacionais. Na listagem, os status operacionais (*is_active*) ganham *badges* coloridos (Verde para Ativo, Vermelho para Inativo).
 - **Organização Clara (Fieldsets & Sidebar):** Menu lateral elegantemente organizado por categorias e ícones (Material Symbols). Formulários pesados divididos em seções visuais limpas (Identificação, Hardware e Local, Segurança e API).
