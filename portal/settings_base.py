@@ -91,7 +91,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 GRAFANA_BASE_URL = env('GRAFANA_BASE_URL', default='')
 
 # --- Configurações do InfluxDB ---
-INFLUXDB_HOST = env("INFLUXDB_HOST", default="136.248.96.131")
+INFLUXDB_HOST = env("INFLUXDB_HOST", default="127.0.0.1")
 INFLUXDB_PORT = env.int("INFLUXDB_PORT", default=8086)
 INFLUXDB_DATABASE = env("INFLUXDB_DATABASE", default="iot_data")
 INFLUXDB_USER = env("INFLUXDB_USER", default="")
